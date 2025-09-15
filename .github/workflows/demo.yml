@@ -18,6 +18,9 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    outputs: #allow us to define any output of our choice
+      script-file: ${{ steps.publish.outputs.script-file  }} #script-file matched the echo 'script-file={}' #this is to access the step context value, need to identify which one, making step output to job level output to be accessed in other jobs #we decide this identifier, will later be used to access the output value
+
     steps:
       - name: Get code
         uses: actions/checkout@v3
@@ -25,6 +28,9 @@ jobs:
         run: npm ci
       - name: Build website
         run: npm run build
+      - name: Publish JS filename                                       #this here is a file managed by github and save the script-file output to the data written from the command
+        id: publish
+        run: find dist/assets/*.js -type f -execdir echo 'script-file={}' >> $GITHUB_OUTPUT ';' #like this doesn't do much , we need to create an output, separate thing from artifact, a simple value
       - name: Upload artifacts
         uses: actions/upload-artifact@v4 #upload artifact action, allows us to get the output
         with:
@@ -41,5 +47,9 @@ jobs:
         uses: actions/download-artifact@v5 #gets artifact
         with:
           name: dist-files #same name as uploading, grab zip file produced, download it and unzip it
+      - name: Output contents
+        run: ls
+      - name: Output filename
+        run: echo "${{ needs.build.outputs.script-file }}" #run command that uses the output by the build job , needs is a context object ??? , when i use needs object, can dive into my job on which this job depends
       - name: Deploy
         run: echo "Deploying..."
