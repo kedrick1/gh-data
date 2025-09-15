@@ -9,7 +9,16 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Cache dependencies # we must add step before where files are produced
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm #it's this path that should be cached, npm already builds a cache that contains the dependencies that were installed
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }} #this key will be used to retrieve the cache and recreating that folder on the runner machine, but also if the cache should be discarded because it must be recreated after some dependencies changes
+          #hash simply produces a unique hash value based on a file path we pass to it and that hash value will change whenever the file we pass to it changes
+          #basically this line says, with the action, this npm created cache folder should be stored in some place in GitHub cloud server and should be reused in other jobs and other workflow executions
+          #this cache step does not execute just here but also after the overall job finished to update the cache, so that if dependencies were installed aka new ones, they will be cached again
+          #cache action actually uses one central cache, and we would put it everywhere dependencies are install , so if it changes somewhere , everywhere will know-ish
+      - name: Install dependencies # we want to cache those dependencies and just use cached ones later
         run: npm ci
       - name: Lint code
         run: npm run lint
