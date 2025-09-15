@@ -29,12 +29,17 @@ jobs:
         uses: actions/upload-artifact@v4 #upload artifact action, allows us to get the output
         with:
           name: dist-files #Artifact name
-          path: | #where to find the files to be stored, can specific multiple path, can exclude them as well, pipe symbol for multiple
-            dist
-            package.json #for example
+          path: dist #where to find the files to be stored, can specific multiple path, can exclude them as well, pipe symbol for multiple
+#            dist
+#            package.json #for example
+  #files created in one job won't be automatically available in other job since different runner
   deploy:
-    needs: build
+    needs: build #need to be run after to get artifact
     runs-on: ubuntu-latest
     steps:
+      - name: Get build artifacts
+        uses: actions/download-artifact@v5 #gets artifact
+        with:
+          name: dist-files #same name as uploading, grab zip file produced, download it and unzip it
       - name: Deploy
         run: echo "Deploying..."
